@@ -1,5 +1,5 @@
 var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-var hexWidth = 3, hexHeight = 2;
+var hexWidth = 30, hexHeight = 20;
 var colors = [0x00CC00, 0xCC0000, 0x0000CC, 0xCCCC00, 0xCC00CC, 0x00CCCC, 0xCCCCCC, 0x333333]
 
 // set some camera attributes
@@ -54,6 +54,7 @@ var hexMaterial = [
     {
       color: colors[0]
     }),
+  /*
   new THREE.MeshLambertMaterial(
     {
       color: colors[1]
@@ -82,6 +83,7 @@ var hexMaterial = [
     {
       color: colors[7]
     }),
+*/
   ];
 
 // create a new mesh with
@@ -99,12 +101,15 @@ var sphere = new THREE.Mesh(
 // radiusAtTop, radiusAtBottom, height, segmentsAroundRadius, segmentsAlongHeight
 for (var i = 0; i < hexWidth; i++) {
 	for (var j = 0; j < hexHeight; j++) {
+		var height = (Math.sin(i / 3.0) * 30) 
+			+ (Math.pow(Math.cos((j - 5) / 3.0), 4) * 20)
+			+ 40   //5 + (i + j) * 5;
 		var hex = new THREE.Mesh (
-			new THREE.CylinderGeometry(10, 10, 10, 6, 1, false),
-			hexMaterial[(i * hexWidth + j) % colors.length]);
-		var x = 0 + 17.32 * i + (j % 2 == 0 ? 0 : 8.6),
-			y = 0,
-			z = 0 - 15 * j + (j % 2 == 0 ? 0 : 0);
+			new THREE.CylinderGeometry(10, 10, height, 6, 1, false),
+			hexMaterial[(i * hexWidth + j) % hexMaterial.length]);
+		var x = -200 + 17.32 * i + (j % 2 == 0 ? 0 : 8.6),
+			y = 0 + height / 2,
+			z = 150 - 15 * j + (j % 2 == 0 ? 0 : 0);
 		hex.position.set(x, y, z);
 		scene.add(hex);
 	}
