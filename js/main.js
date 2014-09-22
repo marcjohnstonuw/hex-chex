@@ -7,6 +7,8 @@ var VIEW_ANGLE = 45,
   ASPECT = WIDTH / HEIGHT,
   NEAR = 0.1,
   FAR = 10000;
+var SELECTED, INTERSECTED;
+var controls;
 
 // get the DOM element to attach to
 // - assume we've got jQuery to hand
@@ -14,7 +16,7 @@ var $container = $('#container');
 
 // create a WebGL renderer, camera
 // and a scene
-var renderer = new THREE.WebGLRenderer();
+var renderer = new THREE.WebGLRenderer( { antialias: true } );
 var camera =
   new THREE.PerspectiveCamera(
     VIEW_ANGLE,
@@ -22,14 +24,33 @@ var camera =
     NEAR,
     FAR);
 
+controls = new THREE.TrackballControls( camera );
+controls.rotateSpeed = 1.0;
+controls.zoomSpeed = 1.2;
+controls.panSpeed = 0.8;
+controls.noZoom = false;
+controls.noPan = false;
+controls.staticMoving = true;
+controls.dynamicDampingFactor = 0.3;
+
+var projector = new THREE.Projector();
+var mouse = new THREE.Vector2();
+var offset = new THREE.Vector3();
+var plane = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000, 8, 8 ), new THREE.MeshBasicMaterial( { color: 0xCCCCCC } ) );
+plane.rotation.x = -Math.PI/2;
+plane.position.set(0, 0, 0);
+plane.name = "theplane";
+
 var scene = new THREE.Scene();
+var objects = [];
 
 // add the camera to the scene
 scene.add(camera);
+scene.add(plane);
 
 // the camera starts at 0,0,0
 // so pull it back
-camera.position.set(0, 400, 400);
+camera.position.set(0, 200, 200);
 camera.lookAt(scene.position);	
 
 // start the renderer
@@ -47,17 +68,21 @@ var radius = 2,
 var sphereMaterial =
   new THREE.MeshLambertMaterial(
     {
-      color: 0xCC0000
+      color: 0xCC0000,
+       transparent: true,
     });
 var hexMaterial = [
   new THREE.MeshLambertMaterial(
     {
-      color: colors[0]
+      color: colors[0],
+      wireframe: true,
+       transparent: true,
     }),
-  /*
   new THREE.MeshLambertMaterial(
     {
-      color: colors[1]
+      color: colors[1],
+      wireframe: true,
+       transparent: true,
     }),
   new THREE.MeshLambertMaterial(
     {
@@ -83,7 +108,6 @@ var hexMaterial = [
     {
       color: colors[7]
     }),
-*/
   ];
 
 // create a new mesh with
@@ -106,12 +130,14 @@ for (var i = 0; i < hexWidth; i++) {
 			+ 40   //5 + (i + j) * 5;
 		var hex = new THREE.Mesh (
 			new THREE.CylinderGeometry(10, 10, height, 6, 1, false),
-			hexMaterial[(i * hexWidth + j) % hexMaterial.length]);
-		var x = -200 + 17.32 * i + (j % 2 == 0 ? 0 : 8.6),
+			hexMaterial[(i * hexWidth + j) % 5]);
+		var x = -200 + 17.42 * i + (j % 2 == 0 ? 0 : 8.6),
 			y = 0 + height / 2,
-			z = 150 - 15 * j + (j % 2 == 0 ? 0 : 0);
+			z = 150 - 15.1 * j + (j % 2 == 0 ? 0 : 0);
 		hex.position.set(x, y, z);
+    hex.name = "hex X:" + i + " Z:" + j;
 		scene.add(hex);
+    objects.push(hex);
 	}
 }
 
@@ -137,13 +163,82 @@ sphere.geometry.verticesNeedUpdate = true;
 // changes to the normals
 sphere.geometry.normalsNeedUpdate = true;
 
-// draw!
-function drawit () {
-	renderer.render(scene, camera);
-	setTimeout(function () {
-		drawit();
-	}, 500);
+
+
+function render() {
+  renderer.render( scene, camera );
 }
-drawit();
+function animate() {
+  controls.update();
+  requestAnimationFrame( animate );
+  render();
+}
+animate();
 
 
+
+
+
+function onDocumentMouseMove( event ) {
+
+  event.preventDefault();
+
+  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+  var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
+  projector.unprojectVector( vector, camera );
+
+  var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+
+  if ( SELECTED ) {
+
+    return;
+
+  }
+
+
+  var intersects = raycaster.intersectObjects( objects );
+
+  if ( intersects.length > 0 ) {
+    container.style.cursor = 'pointer';
+
+  } else {
+
+    container.style.cursor = 'auto';
+
+  }
+}
+function onDocumentMouseDown( event ) {
+
+  event.preventDefault();
+
+  var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
+  projector.unprojectVector( vector, camera );
+
+  var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+  var intersects = raycaster.intersectObjects( objects );
+  console.log('clicky');
+
+  if ( intersects.length > 0 ) {
+
+    //controls.enabled = false;
+
+    SELECTED = intersects[ 0 ].object;
+    SELECTED.material = hexMaterial[7]; 
+    console.log('match:' + SELECTED.name);
+    intersects.forEach(function (thing) { console.log(thing.object.name + thing.distance) })
+
+    var intersects = raycaster.intersectObject( plane );
+    offset.copy( intersects[ 0 ].point ).sub( plane.position );
+
+    //container.style.cursor = 'move';
+
+  }
+
+}
+
+renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
