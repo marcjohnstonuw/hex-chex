@@ -42,6 +42,19 @@ plane.position.set(0, 0, 0);
 plane.name = "theplane";
 
 var scene = new THREE.Scene();
+var map = new Array(hexWidth);
+for (var i = 0; i < hexWidth; i++) {
+  map[i] = new Array(hexHeight);
+  for (var j = 0; j < hexHeight; j++) {
+    var tile = {};
+    tile.height = (Math.sin(i / 3.0) * 30) 
+      + (Math.pow(Math.cos((j - 5) / 3.0), 4) * 20)
+      + 40;   //5 + (i + j) * 5;
+    tile.material = 0;
+    tile.selected = false;
+    map[i][j] = tile;
+  }
+}
 var objects = [];
 
 // add the camera to the scene
@@ -50,7 +63,7 @@ scene.add(plane);
 
 // the camera starts at 0,0,0
 // so pull it back
-camera.position.set(0, 200, 200);
+camera.position.set(0, 500, 500);
 camera.lookAt(scene.position);	
 
 // start the renderer
@@ -75,14 +88,10 @@ var hexMaterial = [
   new THREE.MeshLambertMaterial(
     {
       color: colors[0],
-      wireframe: true,
-       transparent: true,
     }),
   new THREE.MeshLambertMaterial(
     {
       color: colors[1],
-      wireframe: true,
-       transparent: true,
     }),
   new THREE.MeshLambertMaterial(
     {
@@ -125,17 +134,17 @@ var sphere = new THREE.Mesh(
 // radiusAtTop, radiusAtBottom, height, segmentsAroundRadius, segmentsAlongHeight
 for (var i = 0; i < hexWidth; i++) {
 	for (var j = 0; j < hexHeight; j++) {
-		var height = (Math.sin(i / 3.0) * 30) 
-			+ (Math.pow(Math.cos((j - 5) / 3.0), 4) * 20)
-			+ 40   //5 + (i + j) * 5;
+		var height = map[i][j].height
 		var hex = new THREE.Mesh (
 			new THREE.CylinderGeometry(10, 10, height, 6, 1, false),
-			hexMaterial[(i * hexWidth + j) % 5]);
+			hexMaterial[ map[i][j].material]);
 		var x = -200 + 17.42 * i + (j % 2 == 0 ? 0 : 8.6),
-			y = 0 + height / 2,
+			y = 0 +  map[i][j].height / 2,
 			z = 150 - 15.1 * j + (j % 2 == 0 ? 0 : 0);
 		hex.position.set(x, y, z);
     hex.name = "hex X:" + i + " Z:" + j;
+    hex.mapX = i;
+    hex.mapY = j;
 		scene.add(hex);
     objects.push(hex);
 	}
@@ -224,10 +233,17 @@ function onDocumentMouseDown( event ) {
 
   if ( intersects.length > 0 ) {
 
-    //controls.enabled = false;
+    controls.enabled = false;
 
     SELECTED = intersects[ 0 ].object;
-    SELECTED.material = hexMaterial[7]; 
+    var mapObj = map[SELECTED.mapX][SELECTED.mapY]
+    if(mapObj.selected) {
+      SELECTED.material = hexMaterial[mapObj.material];
+      mapObj.selected = false;
+    } else {
+      SELECTED.material = hexMaterial[7]; 
+      mapObj.selected = true;
+    }
     console.log('match:' + SELECTED.name);
     intersects.forEach(function (thing) { console.log(thing.object.name + thing.distance) })
 
@@ -240,5 +256,16 @@ function onDocumentMouseDown( event ) {
 
 }
 
+function onDocumentMouseUp( event ) {
+  event.preventDefault();
+  controls.enabled = true;
+  if ( INTERSECTED ) {
+    plane.position.copy( INTERSECTED.position );
+    SELECTED = null;
+  }
+  container.style.cursor = 'auto';
+}
+
 renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
 renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
