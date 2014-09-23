@@ -1,5 +1,5 @@
 var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-var hexWidth = 30, hexHeight = 20, pieces = 5;
+var hexWidth = 25, hexHeight = 25, pieces = 5;
 var colors = [0x00CC00, 0xCC0000, 0x0000CC, 0xCCCC00, 0xCC00CC, 0x00CCCC, 0xCCCCCC, 0x333333]
 
 // set some camera attributes
@@ -60,8 +60,8 @@ var pieces = [
   {x: 2, y: 2},
   {x: 5, y: 2},
   {x: 12, y: 6},
-  {x: 15, y: 12},
-  {x: 24, y: 12},
+  {x: 9, y: 12},
+  {x: 4, y: 22},
 ]
 var objects = [];
 
@@ -146,10 +146,11 @@ for (var i = 0; i < hexWidth; i++) {
 		var hex = new THREE.Mesh (
 			new THREE.CylinderGeometry(10, 10, height, 6, 1, false),
 			hexMaterial[ map[i][j].material]);
-		var x = -200 + 17.42 * i + (j % 2 == 0 ? 0 : 8.6),
+		var x = -200 + 15 * i + (j % 2 == 0 ? 0 : 0),
 			y = 0 +  map[i][j].height / 2,
-			z = 150 - 15.1 * j + (j % 2 == 0 ? 0 : 0);
+			z = 150 - 17.2 * j - (i % 2 == 0 ? 0 : 8.6);
 		hex.position.set(x, y, z);
+    hex.rotation.y = Math.PI / 2;
     hex.name = "hex X:" + i + " Z:" + j;
     hex.gameType = "Tile";
     hex.mapX = i;
@@ -165,9 +166,9 @@ for (var i = 0; i < pieces.length; i++) {
   hexMaterial[1]);
   var map_x = pieces[i].x
   var map_y = pieces[i].y
-  var x = -200 + 17.42 * map_x + (map_y % 2 == 0 ? 0 : 8.6),
+  var x = -200 + 15 * map_x + (map_y % 2 == 0 ? 0 : 0),
     y = 0 + map[map_x][map_y].height + 2,
-    z = 150 - 15.1 * map_y + (map_y % 2 == 0 ? 0 : 0);
+    z = 150 - 17.2 * map_y - (map_x % 2 == 0 ? 0 : 8.6);
   piece.position.set(x, y, z);
   piece.name = "piece" + i;
   piece.gameType = "Piece";
