@@ -7,7 +7,7 @@ var VIEW_ANGLE = 45,
   ASPECT = WIDTH / HEIGHT,
   NEAR = 0.1,
   FAR = 10000;
-var SELECTED, INTERSECTED, CURRENT_PIECE;
+var SELECTED, INTERSECTED, CURRENT_PIECE = null;
 var controls;
 
 // get the DOM element to attach to
@@ -164,15 +164,12 @@ for (var i = 0; i < pieces.length; i++) {
   var piece = new THREE.Mesh (
     new THREE.CylinderGeometry(6, 6, 4, 36, 1, false),
   hexMaterial[1]);
-  var map_x = pieces[i].x
-  var map_y = pieces[i].y
-  var x = -200 + 15 * map_x + (map_y % 2 == 0 ? 0 : 0),
-    y = 0 + map[map_x][map_y].height + 2,
-    z = 150 - 17.2 * map_y - (map_x % 2 == 0 ? 0 : 8.6);
-  piece.position.set(x, y, z);
   piece.name = "piece" + i;
   piece.gameType = "Piece";
   piece.pieceIndex = i;
+  var map_x = pieces[i].x
+  var map_y = pieces[i].y
+  setPiecePosition(piece, map_x, map_y)
   scene.add(piece);
 }
 
@@ -264,11 +261,13 @@ function onDocumentMouseDown( event ) {
     if (SELECTED.gameType === 'Tile') {
       controls.enabled = false;
       var mapObj = map[SELECTED.mapX][SELECTED.mapY]
-      unselectAll();
-      if(mapObj.selected) {
-        SELECTED.material = hexMaterial[mapObj.material];
-        mapObj.selected = false;
+      if(CURRENT_PIECE !== null && mapObj.selected) {
+        //move the piece!
+        //setPiecePosition (CURRENT_PIECE, SELECTED.mapX, SELECTED.mapY)
+        jumpit(CURRENT_PIECE, {x: pieces[CURRENT_PIECE.pieceIndex].x, y: pieces[CURRENT_PIECE.pieceIndex].y}, {x: SELECTED.mapX, y: SELECTED.mapY})
+        unselectAll();
       } else {
+        unselectAll();
         SELECTED.material = hexMaterial[7]; 
         mapObj.selected = true;
       }
@@ -279,6 +278,7 @@ function onDocumentMouseDown( event ) {
       offset.copy( intersects[ 0 ].point ).sub( plane.position );
     } else if (SELECTED.gameType === 'Piece') {
       unselectAll();
+      CURRENT_PIECE = SELECTED;
       var piece = pieces[SELECTED.pieceIndex];
       var neighbours = getNeighbours(piece.x, piece.y, 1);
       neighbours.forEach(function (el) {
@@ -307,6 +307,20 @@ renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
 renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
 renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
 
+function getPiecePosition (map_x, map_y) {
+  var x = -200 + 15 * map_x + (map_y % 2 == 0 ? 0 : 0),
+    y = 0 + map[map_x][map_y].height + 2,
+    z = 150 - 17.2 * map_y - (map_x % 2 == 0 ? 0 : 8.6);
+  return { x: x, y: y, z: z};
+}
+
+function setPiecePosition (piece, map_x, map_y) {
+  var pos = getPiecePosition(map_x, map_y);
+  piece.position.set(pos.x, pos.y, pos.z);
+  pieces[piece.pieceIndex].x = map_x;
+  pieces[piece.pieceIndex].y = map_y;
+}
+
 function getNeighbours(map_x, map_y, radius, self) {
   if (self === undefined) self = false;
   var ret = [];
@@ -317,18 +331,18 @@ function getNeighbours(map_x, map_y, radius, self) {
     if (map_y + 1 < hexHeight) {
       ret.push([map_x, map_y + 1]);
     }
-    if (map_y - 1 > 0) {
+    if (map_y - 1 >= 0) {
      ret.push([map_x, map_y - 1]); 
     }
-    if (map_x - 1 > 0) {
+    if (map_x - 1 >= 0) {
       ret.push([map_x-1, map_y]);
-      if (map_y - 1 > 0) {
+      if (map_y - 1 >= 0) {
        ret.push([map_x-1, map_y - 1]); 
       }
     }
     if (map_x + 1 < hexWidth) {
       ret.push([map_x+1, map_y]);
-      if (map_y - 1 > 0) {
+      if (map_y - 1 >= 0) {
        ret.push([map_x+1, map_y - 1]); 
       }
     }
@@ -336,10 +350,10 @@ function getNeighbours(map_x, map_y, radius, self) {
     if (map_y + 1 < hexHeight) {
       ret.push([map_x, map_y + 1]);
     }
-    if (map_y - 1 > 0) {
+    if (map_y - 1 >= 0) {
      ret.push([map_x, map_y - 1]); 
     }
-    if (map_x - 1 > 0) {
+    if (map_x - 1 >= 0) {
       ret.push([map_x-1, map_y]);
       if (map_y + 1 < hexHeight) {
        ret.push([map_x-1, map_y + 1]); 
@@ -356,6 +370,7 @@ function getNeighbours(map_x, map_y, radius, self) {
 }
 
 function unselectAll () {
+  CURRENT_PIECE = null;
   for (var i = 0; i < hexWidth; i++) {
     for (var j = 0; j < hexHeight; j++) {
       if (map[i][j].selected) unselect(i, j);
@@ -367,3 +382,46 @@ function unselect(x, y) {
   map[x][y].selected = false;
   map[x][y].graphicObject.material = hexMaterial[0];
 }
+
+function jumpit(piece, from, to) {
+  var x0 = 1;
+  var y0 = map[from.x][from.y].height + 2;
+  var x1 = 2;
+  var y1 = map[to.x][to.y].height + 2;
+
+  var c = (y1 + (9.8 * x1 * x1) - ((y0 * x1) / x0) - (9.8 * x1 * x0)) / (1 - (x1 / x0));
+  var b = (y0 + (9.8 * x0 * x0) - c) / x0;
+
+  var start = getPiecePosition(from.x, from.y);
+  var startX = start.x;
+  var startY = start.y;
+  var startZ = start.z;
+
+  var end = getPiecePosition(to.x, to.y);
+  var endX = end.x;
+  var endY = end.y;
+  var endZ = end.z;
+
+  slideit(piece, start, end, 0, 60, b, c);
+  pieces[piece.pieceIndex].x = to.x;
+  pieces[piece.pieceIndex].y = to.y;
+}
+
+function slideit(piece, start, end, frames, total, b, c) {
+  if (frames > total) {
+    return;
+  } else {
+    var x = 1 + (frames / total);
+    piece.position.set(
+      start.x + (end.x - start.x) * (frames / total),
+      (-9.8 *x * x) + b * x + c,
+      start.z + (end.z - start.z) * (frames / total)
+    );
+    setTimeout(function () {
+      slideit(piece, start, end, frames + 1, total, b, c);
+    }, 50)
+  }
+}
+
+//save this shit, y-coordinate for jumps
+//(y1 + (9.8 * x1 * x1) - ((y0 * x1) / x0) - (9.8 * x1 * x0)) / (1 - (x1 / x0))
