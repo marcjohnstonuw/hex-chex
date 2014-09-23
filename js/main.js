@@ -280,7 +280,7 @@ function onDocumentMouseDown( event ) {
       unselectAll();
       CURRENT_PIECE = SELECTED;
       var piece = pieces[SELECTED.pieceIndex];
-      var neighbours = getNeighbours(piece.x, piece.y, 1);
+      var neighbours = getRange(piece.x, piece.y, 4);//getNeighbours(piece.x, piece.y, 1);
       neighbours.forEach(function (el) {
         map[el[0]][el[1]].selected = true;
         map[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
@@ -319,6 +319,28 @@ function setPiecePosition (piece, map_x, map_y) {
   piece.position.set(pos.x, pos.y, pos.z);
   pieces[piece.pieceIndex].x = map_x;
   pieces[piece.pieceIndex].y = map_y;
+}
+
+function getRange(map_x, map_y, radius) {
+  var ret = [];
+  if (map_x % 2 === 1) {
+    for (var i = -radius; i <= radius; i++) {
+      for (var j = (-radius + Math.ceil(0.5 * Math.abs(i))); j <= (radius - Math.floor(0.5 * Math.abs(i))); j++) {
+        if (map_x + i >= 0 && map_x + i < hexWidth && map_y + j >= 0 && map_y + j < hexHeight) {
+          ret.push([map_x + i, map_y + j]);
+        } 
+      }
+    }
+  } else {
+    for (var i = -radius; i <= radius; i++) {
+      for (var j = (-radius + Math.floor(0.5 * Math.abs(i))); j <= (radius - Math.ceil(0.5 * Math.abs(i))); j++) {
+        if (map_x + i >= 0 && map_x + i < hexWidth && map_y + j >= 0 && map_y + j < hexHeight) {
+          ret.push([map_x + i, map_y + j]);
+        } 
+      }
+    }
+  }
+  return ret;
 }
 
 function getNeighbours(map_x, map_y, radius, self) {
@@ -402,7 +424,7 @@ function jumpit(piece, from, to) {
   var endY = end.y;
   var endZ = end.z;
 
-  slideit(piece, start, end, 0, 60, b, c);
+  slideit(piece, start, end, 0, 20, b, c);
   pieces[piece.pieceIndex].x = to.x;
   pieces[piece.pieceIndex].y = to.y;
 }
@@ -419,7 +441,7 @@ function slideit(piece, start, end, frames, total, b, c) {
     );
     setTimeout(function () {
       slideit(piece, start, end, frames + 1, total, b, c);
-    }, 50)
+    }, 17)
   }
 }
 
