@@ -264,6 +264,7 @@ function onDocumentMouseDown( event ) {
     if (SELECTED.gameType === 'Tile') {
       controls.enabled = false;
       var mapObj = map[SELECTED.mapX][SELECTED.mapY]
+      unselectAll();
       if(mapObj.selected) {
         SELECTED.material = hexMaterial[mapObj.material];
         mapObj.selected = false;
@@ -277,6 +278,7 @@ function onDocumentMouseDown( event ) {
       var intersects = raycaster.intersectObject( plane );
       offset.copy( intersects[ 0 ].point ).sub( plane.position );
     } else if (SELECTED.gameType === 'Piece') {
+      unselectAll();
       var piece = pieces[SELECTED.pieceIndex];
       var neighbours = getNeighbours(piece.x, piece.y, 1);
       neighbours.forEach(function (el) {
@@ -351,4 +353,17 @@ function getNeighbours(map_x, map_y, radius, self) {
     }
   }
   return ret;
+}
+
+function unselectAll () {
+  for (var i = 0; i < hexWidth; i++) {
+    for (var j = 0; j < hexHeight; j++) {
+      if (map[i][j].selected) unselect(i, j);
+    }
+  }
+}
+
+function unselect(x, y) {
+  map[x][y].selected = false;
+  map[x][y].graphicObject.material = hexMaterial[0];
 }
