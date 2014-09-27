@@ -405,42 +405,63 @@ function unselect(x, y) {
   map[x][y].graphicObject.material = hexMaterial[0];
 }
 
+function getDistance (p1, p2) {
+  var ret = Math.abs(p1.y - p2.y);
+  if (p1.x % 2 === 0) {
+    if (p2.y >= p1.y) {
+      ret += Math.abs(p1.x - p2.x);
+    } else if (p1.x != p2.x) {
+      ret += Math.abs(p1.x - p2.x) - 1;
+    }
+  }
+  else {
+    if (p2.y > p1.y && p1.x != p2.x) {
+      ret += Math.abs(p1.x - p2.x) - 1;
+    } else {
+      ret += Math.abs(p1.x - p2.x);
+    }
+  }
+  return ret;
+}
+
 function jumpit(piece, from, to) {
+  var start = getPiecePosition(from.x, from.y);
+  var end = getPiecePosition(to.x, to.y);
+  var distance = getDistance(from, to); //3;//Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.z - start.z, 2));
+  console.log('distance :' + distance );//+ 'delta x' + (end.x - start.x) + 'delta z' + (end.z - start.z)
   var x0 = 1;
   var y0 = map[from.x][from.y].height + 2;
-  var x1 = 2;
+  var x1 = 1 + distance;
   var y1 = map[to.x][to.y].height + 2;
 
   var c = (y1 + (9.8 * x1 * x1) - ((y0 * x1) / x0) - (9.8 * x1 * x0)) / (1 - (x1 / x0));
   var b = (y0 + (9.8 * x0 * x0) - c) / x0;
 
-  var start = getPiecePosition(from.x, from.y);
   var startX = start.x;
   var startY = start.y;
   var startZ = start.z;
 
-  var end = getPiecePosition(to.x, to.y);
   var endX = end.x;
   var endY = end.y;
   var endZ = end.z;
 
-  slideit(piece, start, end, 0, 20, b, c);
+  slideit(piece, start, end, distance, 0, 60, b, c);
   pieces[piece.pieceIndex].x = to.x;
   pieces[piece.pieceIndex].y = to.y;
 }
 
-function slideit(piece, start, end, frames, total, b, c) {
+function slideit(piece, start, end, distance, frames, total, b, c) {
   if (frames > total) {
     return;
   } else {
-    var x = 1 + (frames / total);
+    var x = 1 + (frames / total) * distance;
     piece.position.set(
       start.x + (end.x - start.x) * (frames / total),
-      (-9.8 *x * x) + b * x + c,
+      (-9.8 * x * x) + b * x + c,
       start.z + (end.z - start.z) * (frames / total)
     );
     setTimeout(function () {
-      slideit(piece, start, end, frames + 1, total, b, c);
+      slideit(piece, start, end, distance, frames + 1, total, b, c);
     }, 17)
   }
 }
