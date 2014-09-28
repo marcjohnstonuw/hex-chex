@@ -454,7 +454,17 @@ function getForwardMoves (map_x, map_y, radius) {
     }
     for (var j = 0 + y_offset; j <= (radius - Math.abs(i)) + y_offset; j++) {
       if (i + map_x >= 0 && i + map_x < hexWidth && j + map_y >= 0 && j + map_y < hexHeight && !(i == 0 && j == 0)) {
-        ret.push([i + map_x, j + map_y]);
+        var xpos = i + map_x;
+        var ypos = j + map_y;
+        var add = true
+        for (var p = 0; p < pieces.length; p++) {
+          if (!(xpos != pieces[p].x || ypos != pieces[p].y || pieces[p].team != CURRENT_MOVE)) {
+            add = false;
+          }
+        }
+        if (add){
+          ret.push([xpos, ypos]);
+        }
       }
     }
   }
@@ -472,7 +482,17 @@ function getBackwardMoves (map_x, map_y, radius) {
     }
     for (var j = 0 - y_offset; j >= -(radius - Math.abs(i)) - y_offset; j--) {
       if (i + map_x >= 0 && i + map_x < hexWidth && j + map_y >= 0 && j + map_y < hexHeight && !(i == 0 && j == 0)) {
-        ret.push([i + map_x, j + map_y]);
+        var xpos = i + map_x;
+        var ypos = j + map_y;
+        var add = true
+        for (var p = 0; p < pieces.length; p++) {
+          if (!(xpos != pieces[p].x || ypos != pieces[p].y || pieces[p].team != CURRENT_MOVE)) {
+            add = false;
+          }
+        }
+        if (add){
+          ret.push([xpos, ypos]);
+        }
       }
     }
   }
