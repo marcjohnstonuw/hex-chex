@@ -1,5 +1,7 @@
 var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-var hexWidth = 25, hexHeight = 25, pieces = 5;
+var hexWidth = 9, hexHeight = 7;
+var NUM_TEAMS = 2;
+var CURRENT_MOVE = 0;
 var colors = [0x00CC00, 0xCC0000, 0x0000CC, 0xCCCC00, 0xCC00CC, 0x00CCCC, 0xCCCCCC, 0x333333]
 
 // set some camera attributes
@@ -47,9 +49,12 @@ for (var i = 0; i < hexWidth; i++) {
   map[i] = new Array(hexHeight);
   for (var j = 0; j < hexHeight; j++) {
     var tile = {};
-    tile.height = (Math.sin(i / 3.0) * 30) 
-      + (Math.pow(Math.cos((j - 5) / 3.0), 4) * 20)
-      + 40;   //5 + (i + j) * 5;
+    tile.height = 
+      //(Math.sin(i / 3.0) * 30) + 
+      //(Math.pow(Math.cos((j - 5) / 3.0), 4) * 20) + 
+      ((i % 2 == 0) ? 5 : 0) + 
+      ((j % 2 == 0) ? 5 : 0) + 
+      40;   //5 + (i + j) * 5;
     tile.height = Math.round(tile.height);
     tile.material = 0;
     tile.selected = false;
@@ -57,12 +62,25 @@ for (var i = 0; i < hexWidth; i++) {
   }
 }
 var pieces = [
-  {x: 2, y: 2},
-  {x: 5, y: 2},
-  {x: 12, y: 6},
-  {x: 9, y: 12},
-  {x: 4, y: 22},
-]
+  {x: 0, y: 1, team: 0},
+  {x: 1, y: 0, team: 0},
+  {x: 2, y: 0, team: 0},
+  {x: 3, y: 0, team: 0},
+  {x: 4, y: 1, team: 0},
+  {x: 5, y: 0, team: 0},
+  {x: 6, y: 0, team: 0},
+  {x: 7, y: 0, team: 0},
+  {x: 8, y: 1, team: 0},
+  {x: 0, y: 5, team: 1},
+  {x: 1, y: 5, team: 1},
+  {x: 2, y: 6, team: 1},
+  {x: 3, y: 5, team: 1},
+  {x: 4, y: 5, team: 1},
+  {x: 5, y: 5, team: 1},
+  {x: 6, y: 6, team: 1},
+  {x: 7, y: 5, team: 1},
+  {x: 8, y: 5, team: 1}
+];
 var objects = [];
 
 // add the camera to the scene
@@ -71,11 +89,14 @@ scene.add(plane);
 
 // the camera starts at 0,0,0
 // so pull it back
-camera.position.set(0, 500, 500);
+camera.position.set(0, 400, 200);
 camera.lookAt(scene.position);	
 
 // start the renderer
 renderer.setSize(WIDTH, HEIGHT);
+
+renderer.shadowMapEnabled = true;
+renderer.shadowMapType = THREE.PCFShadowMap;
 
 // attach the render-supplied DOM element
 $container.append(renderer.domElement);
@@ -146,9 +167,11 @@ for (var i = 0; i < hexWidth; i++) {
 		var hex = new THREE.Mesh (
 			new THREE.CylinderGeometry(10, 10, height, 6, 1, false),
 			hexMaterial[ map[i][j].material]);
-		var x = -200 + 15 * i + (j % 2 == 0 ? 0 : 0),
+    hex.castShadow = true;
+    hex.receiveShadow = true;
+		var x = -75 + 15 * i + (j % 2 == 0 ? 0 : 0),
 			y = 0 +  map[i][j].height / 2,
-			z = 150 - 17.2 * j - (i % 2 == 0 ? 0 : 8.6);
+			z = 90 - 17.2 * j - (i % 2 == 0 ? 0 : 8.6);
 		hex.position.set(x, y, z);
     hex.rotation.y = Math.PI / 2;
     hex.name = "hex X:" + i + " Z:" + j;
@@ -163,24 +186,48 @@ for (var i = 0; i < hexWidth; i++) {
 for (var i = 0; i < pieces.length; i++) {
   var piece = new THREE.Mesh (
     new THREE.CylinderGeometry(6, 6, 4, 36, 1, false),
-  hexMaterial[1]);
+  hexMaterial[pieces[i].team + 1]);
+  piece.castShadow = true;
+  piece.receiveShadow = true;
   piece.name = "piece" + i;
   piece.gameType = "Piece";
   piece.pieceIndex = i;
+  piece.position = {};
+  piece.team = pieces[i].team
+  if (pieces[i].team === 0) {
+    piece.getMoves = getForwardMoves;
+  } else {
+    piece.getMoves = getBackwardMoves;
+  }
   var map_x = pieces[i].x
   var map_y = pieces[i].y
   setPiecePosition(piece, map_x, map_y)
   scene.add(piece);
 }
 
+
+scene.add( new THREE.AmbientLight( 0x202020 ) );
+
 // create a point light
 var pointLight =
-  new THREE.PointLight(0xFFFFFF);
+  new THREE.SpotLight(0xFFFFFF, 1.5);
+  //pointLight.target = new THREE.object3d(0, 0, -50);
 
 // set its position
-pointLight.position.x = -200;
-pointLight.position.y = 200;
-pointLight.position.z = 200;
+pointLight.position.x = -150;
+pointLight.position.y = 150;
+pointLight.position.z = 150;
+pointLight.castShadow = true;
+
+pointLight.shadowCameraNear = 20;
+pointLight.shadowCameraFar = camera.far;
+pointLight.shadowCameraFov = 50;
+
+pointLight.shadowBias = -0.00022;
+pointLight.shadowDarkness = 0.5;
+
+pointLight.shadowMapWidth = 2048;
+pointLight.shadowMapHeight = 2048;
 
 // add to the scene
 scene.add(pointLight);
@@ -266,6 +313,7 @@ function onDocumentMouseDown( event ) {
         //setPiecePosition (CURRENT_PIECE, SELECTED.mapX, SELECTED.mapY)
         jumpit(CURRENT_PIECE, {x: pieces[CURRENT_PIECE.pieceIndex].x, y: pieces[CURRENT_PIECE.pieceIndex].y}, {x: SELECTED.mapX, y: SELECTED.mapY})
         unselectAll();
+        nextMove();
       } else {
         unselectAll();
         SELECTED.material = hexMaterial[7]; 
@@ -278,13 +326,18 @@ function onDocumentMouseDown( event ) {
       offset.copy( intersects[ 0 ].point ).sub( plane.position );
     } else if (SELECTED.gameType === 'Piece') {
       unselectAll();
-      CURRENT_PIECE = SELECTED;
-      var piece = pieces[SELECTED.pieceIndex];
-      var neighbours = getRange(piece.x, piece.y, 4);//getNeighbours(piece.x, piece.y, 1);
-      neighbours.forEach(function (el) {
-        map[el[0]][el[1]].selected = true;
-        map[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
-      })
+      if (SELECTED.team === CURRENT_MOVE) {
+        CURRENT_PIECE = SELECTED;
+        var piece = pieces[SELECTED.pieceIndex];
+        var neighbours = CURRENT_PIECE.getMoves(piece.x, piece.y, 2);//getRange(piece.x, piece.y, 2);//getNeighbours(piece.x, piece.y, 1);
+        neighbours.forEach(function (el) {
+          map[el[0]][el[1]].selected = true;
+          map[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
+        })
+      }
+    } else {
+        unselectAll();
+        CURRENT_PIECE = null;
     }
 
     //container.style.cursor = 'move';
@@ -308,9 +361,9 @@ renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
 renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
 
 function getPiecePosition (map_x, map_y) {
-  var x = -200 + 15 * map_x + (map_y % 2 == 0 ? 0 : 0),
+  var x = -75 + 15 * map_x + (map_y % 2 == 0 ? 0 : 0),
     y = 0 + map[map_x][map_y].height + 2,
-    z = 150 - 17.2 * map_y - (map_x % 2 == 0 ? 0 : 8.6);
+    z = 90 - 17.2 * map_y - (map_x % 2 == 0 ? 0 : 8.6);
   return { x: x, y: y, z: z};
 }
 
@@ -389,6 +442,47 @@ function getNeighbours(map_x, map_y, radius, self) {
     }
   }
   return ret;
+}
+
+function getForwardMoves (map_x, map_y, radius) {
+  var ret = [];
+
+  for (var i = -radius; i <= radius; i++) {
+    var y_offset = Math.floor(Math.abs(i) / 2);
+    if (map_x % 2 == 1) {
+      y_offset += (Math.abs(i) % 2 == 1) ? 1 : 0;
+    }
+    for (var j = 0 + y_offset; j <= (radius - Math.abs(i)) + y_offset; j++) {
+      if (i + map_x >= 0 && i + map_x < hexWidth && j + map_y >= 0 && j + map_y < hexHeight && !(i == 0 && j == 0)) {
+        ret.push([i + map_x, j + map_y]);
+      }
+    }
+  }
+
+  return ret;
+}
+
+function getBackwardMoves (map_x, map_y, radius) {
+  var ret = [];
+
+  for (var i = -radius; i <= radius; i++) {
+    var y_offset = Math.ceil(Math.abs(i) / 2);
+    if (map_x % 2 == 1) {
+      y_offset -= (Math.abs(i) % 2 == 1) ? 1 : 0;
+    }
+    for (var j = 0 - y_offset; j >= -(radius - Math.abs(i)) - y_offset; j--) {
+      if (i + map_x >= 0 && i + map_x < hexWidth && j + map_y >= 0 && j + map_y < hexHeight && !(i == 0 && j == 0)) {
+        ret.push([i + map_x, j + map_y]);
+      }
+    }
+  }
+
+  return ret;
+}
+
+function nextMove () {
+  CURRENT_MOVE += 1;
+  CURRENT_MOVE = CURRENT_MOVE % NUM_TEAMS;
 }
 
 function unselectAll () {
