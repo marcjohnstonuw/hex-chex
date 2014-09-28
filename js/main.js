@@ -194,6 +194,8 @@ for (var i = 0; i < pieces.length; i++) {
   piece.pieceIndex = i;
   piece.position = {};
   piece.team = pieces[i].team
+  pieces[i].piece = piece;
+  pieces[i].name = "piece" + i;
   if (pieces[i].team === 0) {
     piece.getMoves = getForwardMoves;
   } else {
@@ -539,6 +541,7 @@ function getDistance (p1, p2) {
 }
 
 function jumpit(piece, from, to) {
+  takePiece(piece, to);
   var start = getPiecePosition(from.x, from.y);
   var end = getPiecePosition(to.x, to.y);
   var distance = getDistance(from, to); //3;//Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.z - start.z, 2));
@@ -562,6 +565,20 @@ function jumpit(piece, from, to) {
   slideit(piece, start, end, distance, 0, 60, b, c);
   pieces[piece.pieceIndex].x = to.x;
   pieces[piece.pieceIndex].y = to.y;
+}
+
+function takePiece(piece, to) {
+  for (var i = 0; i < pieces.length; i++) {
+    if (pieces[i].x === to.x && pieces[i].y === to.y && pieces[i] != piece.team) {
+      //var removed = pieces.splice(i, 1);
+      pieces[i].take = true;
+      var sceneObj = scene.getObjectByName(pieces[i].name);
+      var thing = scene.remove(sceneObj);  
+      animate();
+      console.log('REMOVED');
+    }
+  }
+  console.log('done');
 }
 
 function slideit(piece, start, end, distance, frames, total, b, c) {
