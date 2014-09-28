@@ -542,6 +542,7 @@ function getDistance (p1, p2) {
 
 function jumpit(piece, from, to) {
   takePiece(piece, to);
+  checkPromotion(piece, to);
   var start = getPiecePosition(from.x, from.y);
   var end = getPiecePosition(to.x, to.y);
   var distance = getDistance(from, to); //3;//Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.z - start.z, 2));
@@ -565,6 +566,14 @@ function jumpit(piece, from, to) {
   slideit(piece, start, end, distance, 0, 60, b, c);
   pieces[piece.pieceIndex].x = to.x;
   pieces[piece.pieceIndex].y = to.y;
+}
+
+function checkPromotion(piece, to) {
+  if (piece.team === 0 && to.y === hexHeight - 1) {
+    piece.getMoves = getRange;
+  } else if (piece.team === 1 && to.y === 0) {
+    piece.getMoves = getRange;
+  }
 }
 
 function takePiece(piece, to) {
