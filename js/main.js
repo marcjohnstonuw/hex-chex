@@ -2,6 +2,7 @@ var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 var hexWidth = 9, hexHeight = 7;
 var NUM_TEAMS = 2;
 var CURRENT_MOVE = 0;
+var MOVE_CHAIN = false;
 var colors = [0x00CC00, 0xCC0000, 0x0000CC, 0xCCCC00, 0xCC00CC, 0x00CCCC, 0xCCCCCC, 0x333333]
 
 // set some camera attributes
@@ -194,12 +195,13 @@ for (var i = 0; i < pieces.length; i++) {
   piece.pieceIndex = i;
   piece.position = {};
   piece.team = pieces[i].team
+  pieces[i].range = 2;
   pieces[i].piece = piece;
   pieces[i].name = "piece" + i;
   if (pieces[i].team === 0) {
-    piece.getMoves = getForwardMoves;
+    pieces[i].getMoves = getForwardMoves;
   } else {
-    piece.getMoves = getBackwardMoves;
+    pieces[i].getMoves = getBackwardMoves;
   }
   var map_x = pieces[i].x
   var map_y = pieces[i].y
@@ -314,10 +316,7 @@ function onDocumentMouseDown( event ) {
         //move the piece!
         //setPiecePosition (CURRENT_PIECE, SELECTED.mapX, SELECTED.mapY)
         jumpit(CURRENT_PIECE, {x: pieces[CURRENT_PIECE.pieceIndex].x, y: pieces[CURRENT_PIECE.pieceIndex].y}, {x: SELECTED.mapX, y: SELECTED.mapY})
-        unselectAll();
-        nextMove();
       } else {
-        unselectAll();
         SELECTED.material = hexMaterial[7]; 
         mapObj.selected = true;
       }
@@ -327,19 +326,18 @@ function onDocumentMouseDown( event ) {
       var intersects = raycaster.intersectObject( plane );
       offset.copy( intersects[ 0 ].point ).sub( plane.position );
     } else if (SELECTED.gameType === 'Piece') {
-      unselectAll();
+      //unselectAll();
+      if (MOVE_CHAIN) {
+        return;
+      }
       if (SELECTED.team === CURRENT_MOVE) {
         CURRENT_PIECE = SELECTED;
         var piece = pieces[SELECTED.pieceIndex];
-        var neighbours = CURRENT_PIECE.getMoves(piece.x, piece.y, 2);//getRange(piece.x, piece.y, 2);//getNeighbours(piece.x, piece.y, 1);
-        neighbours.forEach(function (el) {
-          map[el[0]][el[1]].selected = true;
-          map[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
-        })
+        highlightMoves(piece, 2);
       }
     } else {
-        unselectAll();
-        CURRENT_PIECE = null;
+        //unselectAll();
+        //CURRENT_PIECE = null;
     }
 
     //container.style.cursor = 'move';
@@ -505,10 +503,14 @@ function getBackwardMoves (map_x, map_y, radius) {
 function nextMove () {
   CURRENT_MOVE += 1;
   CURRENT_MOVE = CURRENT_MOVE % NUM_TEAMS;
+  MOVE_CHAIN = false;
+  unselectAll();
 }
 
-function unselectAll () {
-  CURRENT_PIECE = null;
+function unselectAll (keepPiece) {
+  if (!!keepPiece) {
+    CURRENT_PIECE = null;
+  }
   for (var i = 0; i < hexWidth; i++) {
     for (var j = 0; j < hexHeight; j++) {
       if (map[i][j].selected) unselect(i, j);
@@ -540,8 +542,29 @@ function getDistance (p1, p2) {
   return ret;
 }
 
+function highlightMoves (piece) {
+  var neighbours = piece.getMoves(piece.x, piece.y, piece.range);//getRange(piece.x, piece.y, 2);//getNeighbours(piece.x, piece.y, 1);
+  neighbours.forEach(function (el) {
+    map[el[0]][el[1]].selected = true;
+    map[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
+  })
+}
+
+function chainMove(piece) {
+  unselectAll();
+  MOVE_CHAIN = true;
+  highlightMoves(piece);
+}
+
 function jumpit(piece, from, to) {
-  takePiece(piece, to);
+  var nextTurn = takePiece(piece, from, to);
+  pieces[piece.pieceIndex].x = to.x;
+  pieces[piece.pieceIndex].y = to.y;
+  if (nextTurn) {
+    nextMove();
+  } else {
+    chainMove(pieces[piece.pieceIndex])
+  }
   checkPromotion(piece, to);
   var start = getPiecePosition(from.x, from.y);
   var end = getPiecePosition(to.x, to.y);
@@ -564,8 +587,6 @@ function jumpit(piece, from, to) {
   var endZ = end.z;
 
   slideit(piece, start, end, distance, 0, 60, b, c);
-  pieces[piece.pieceIndex].x = to.x;
-  pieces[piece.pieceIndex].y = to.y;
 }
 
 function checkPromotion(piece, to) {
@@ -576,18 +597,42 @@ function checkPromotion(piece, to) {
   }
 }
 
-function takePiece(piece, to) {
+function takePiece(piece, from, to) {
   for (var i = 0; i < pieces.length; i++) {
     if (pieces[i].x === to.x && pieces[i].y === to.y && pieces[i] != piece.team) {
       //var removed = pieces.splice(i, 1);
       pieces[i].taken = true;
       var sceneObj = scene.getObjectByName(pieces[i].name);
-      var thing = scene.remove(sceneObj);  
-      animate();
+      scene.remove(sceneObj);  
+      //animate();
       console.log('REMOVED');
     }
   }
+  //jumped piece?
+  var jump_x, jump_y;
+  if (from.x === to.x && Math.abs(from.y - to.y) === 2) {
+    jump_x = from.x;
+    jump_y = (to.y + from.y) / 2;
+  } else if (Math.abs(from.x - to.x) === 2) {
+    jump_x = (to.x + from.x) / 2;
+    if (from.x % 2 === 0) {
+      jump_y = to.y > from.y ? from.y : from.y - 1;
+    } else {
+      jump_y = to.y > from.y ? from.y + 1 : from.y;
+    }
+  }
+  if (jump_x !== undefined) {
+    for (var i = 0; i < pieces.length; i++) {
+      if (pieces[i].x === jump_x && pieces[i].y === jump_y && pieces[i] != piece.team) {
+        pieces[i].taken = true;
+        var sceneObj = scene.getObjectByName(pieces[i].name);
+        scene.remove(sceneObj);
+        return false;
+      }
+    }
+  }
   console.log('done');
+  return true;
 }
 
 function slideit(piece, start, end, distance, frames, total, b, c) {
