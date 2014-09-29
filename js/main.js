@@ -460,7 +460,7 @@ function getForwardMoves (map_x, map_y, radius) {
         var ypos = j + map_y;
         var add = true
         for (var p = 0; p < pieces.length; p++) {
-          if (!(xpos != pieces[p].x || ypos != pieces[p].y || pieces[p].team != CURRENT_MOVE)) {
+          if (!(xpos != pieces[p].x || ypos != pieces[p].y || pieces[p].team != CURRENT_MOVE || pieces[p].taken === true)) {
             add = false;
           }
         }
@@ -488,7 +488,7 @@ function getBackwardMoves (map_x, map_y, radius) {
         var ypos = j + map_y;
         var add = true
         for (var p = 0; p < pieces.length; p++) {
-          if (!(xpos != pieces[p].x || ypos != pieces[p].y || pieces[p].team != CURRENT_MOVE)) {
+          if (!(xpos != pieces[p].x || ypos != pieces[p].y || pieces[p].team != CURRENT_MOVE || pieces[p].taken === true)) {
             add = false;
           }
         }
@@ -580,7 +580,7 @@ function takePiece(piece, to) {
   for (var i = 0; i < pieces.length; i++) {
     if (pieces[i].x === to.x && pieces[i].y === to.y && pieces[i] != piece.team) {
       //var removed = pieces.splice(i, 1);
-      pieces[i].take = true;
+      pieces[i].taken = true;
       var sceneObj = scene.getObjectByName(pieces[i].name);
       var thing = scene.remove(sceneObj);  
       animate();
