@@ -3,6 +3,7 @@ var hexWidth = 9, hexHeight = 7;
 var NUM_TEAMS = 2;
 var CURRENT_MOVE = 0;
 var MOVE_CHAIN = false;
+var CAN_CAPTURE = false;
 var colors = [0x00CC00, 0xCC0000, 0x0000CC, 0xCCCC00, 0xCC00CC, 0x00CCCC, 0xCCCCCC, 0x333333]
 
 // set some camera attributes
@@ -326,14 +327,16 @@ function onDocumentMouseDown( event ) {
       var intersects = raycaster.intersectObject( plane );
       offset.copy( intersects[ 0 ].point ).sub( plane.position );
     } else if (SELECTED.gameType === 'Piece') {
-      //unselectAll();
       if (MOVE_CHAIN) {
         return;
       }
       if (SELECTED.team === CURRENT_MOVE) {
-        CURRENT_PIECE = SELECTED;
         var piece = pieces[SELECTED.pieceIndex];
-        highlightMoves(piece, 2);
+        if (!CAN_CAPTURE || piece.canCapture) {
+          unselectAll();
+          CURRENT_PIECE = SELECTED;
+          highlightMoves(piece, 2);
+        }      
       }
     } else {
         //unselectAll();
@@ -565,7 +568,8 @@ function jumpit(piece, from, to) {
   } else {
     chainMove(pieces[piece.pieceIndex])
   }
-  checkPromotion(piece, to);
+  checkPromotion(pieces[piece.pieceIndex], to);
+  checkCanCapture();
   var start = getPiecePosition(from.x, from.y);
   var end = getPiecePosition(to.x, to.y);
   var distance = getDistance(from, to); //3;//Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.z - start.z, 2));
@@ -590,6 +594,7 @@ function jumpit(piece, from, to) {
 }
 
 function checkPromotion(piece, to) {
+  console.log('promotion check at ' + to.x + ' ' + to.y);
   if (piece.team === 0 && to.y === hexHeight - 1) {
     piece.getMoves = getRange;
   } else if (piece.team === 1 && to.y === 0) {
@@ -649,6 +654,40 @@ function slideit(piece, start, end, distance, frames, total, b, c) {
       slideit(piece, start, end, distance, frames + 1, total, b, c);
     }, 17)
   }
+}
+
+function checkCanCapture () {
+  CAN_CAPTURE = false;
+  var enemyPositions = [];
+  for (var i = 0; i < pieces.length; i++) {
+    pieces[i].canCapture = false;
+    if (pieces[i].team != CURRENT_MOVE && !pieces[i].taken) {
+      enemyPositions.push([pieces[i].x, pieces[i].y]);
+    }
+  }
+
+  for (var i = 0; i < pieces.length; i++) {
+    if (pieces[i].team === CURRENT_MOVE && !pieces[i].taken) {
+      var moves = pieces[i].getMoves(pieces[i].x, pieces[i].y, pieces[i].range);
+      var intersection = intersectTiles(enemyPositions, moves).length > 0;
+      pieces[i].canCapture = intersection;
+      if (intersection) {
+        CAN_CAPTURE = true;
+      }
+    }
+  }
+}
+
+function intersectTiles(a, b) {
+  var ret = [];
+  for (var i = 0; i < a.length; i++) {
+    for (var j = 0; j < b.length; j++) {
+      if (a[i][0] === b[j][0] && a[i][1] === b[j][1]) {
+        ret.push(a[i]);
+      }
+    }
+  }
+  return ret;
 }
 
 //save this shit, y-coordinate for jumps
