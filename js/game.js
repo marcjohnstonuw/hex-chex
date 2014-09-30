@@ -57,7 +57,6 @@ function jumpit(piece, from, to) {
   var start = getPiecePosition(from.x, from.y);
   var end = getPiecePosition(to.x, to.y);
   var distance = getDistance(from, to); //3;//Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.z - start.z, 2));
-  console.log('distance :' + distance );//+ 'delta x' + (end.x - start.x) + 'delta z' + (end.z - start.z)
   var x0 = 1;
   var y0 = map[from.x][from.y].height + 2;
   var x1 = 1 + distance;
@@ -85,7 +84,7 @@ function nextMove () {
 }
 
 function clickObject(obj) {
-	SELECTED = obj;
+	SELECTED = intersects[ 0 ].object;
 	if (SELECTED.gameType === 'Tile') {
 	  controls.enabled = false;
 	  var mapObj = map[SELECTED.mapX][SELECTED.mapY];

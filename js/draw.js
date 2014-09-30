@@ -184,8 +184,47 @@ function initScene () {
 	  setPiecePosition(piece, map_x, map_y)
 	  scene.add(piece);
 	}
-	animate();
 
+
+var manager = new THREE.LoadingManager();
+manager.onProgress = function ( item, loaded, total ) {
+
+  console.log( item, loaded, total );
+
+};
+
+var texture = new THREE.Texture();
+
+var loader = new THREE.ImageLoader( manager );
+loader.load( 'assets/textures/UV_Grid_Sm.jpg', function ( image ) {
+
+  texture.image = image;
+  texture.needsUpdate = true;
+
+} );
+
+// model
+
+var loader = new THREE.OBJLoader( manager );
+loader.load( 'assets/objects/sword.obj', function ( object ) {
+
+  object.traverse( function ( child ) {
+
+    if ( child instanceof THREE.Mesh ) {
+
+      child.material.map = texture;
+
+    }
+
+  } );
+
+  object.position.y = 80;
+  object.scale.set(30, 30, 30)
+  scene.add( object );
+
+} );
+
+	animate();
 }
 
 
