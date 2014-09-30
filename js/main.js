@@ -312,7 +312,7 @@ function onDocumentMouseDown( event ) {
     SELECTED = intersects[ 0 ].object;
     if (SELECTED.gameType === 'Tile') {
       controls.enabled = false;
-      var mapObj = map[SELECTED.mapX][SELECTED.mapY]
+      var mapObj = map[SELECTED.mapX][SELECTED.mapY];
       if(CURRENT_PIECE !== null && mapObj.selected) {
         //move the piece!
         //setPiecePosition (CURRENT_PIECE, SELECTED.mapX, SELECTED.mapY)
@@ -321,12 +321,15 @@ function onDocumentMouseDown( event ) {
         //SELECTED.material = hexMaterial[7]; 
         //mapObj.selected = true;
       }
-      console.log('match:' + SELECTED.name);
-      intersects.forEach(function (thing) { console.log(thing.object.name + thing.distance) })
-
-      var intersects = raycaster.intersectObject( plane );
-      offset.copy( intersects[ 0 ].point ).sub( plane.position );
     } else if (SELECTED.gameType === 'Piece') {
+      if (SELECTED.team !== CURRENT_MOVE) {
+        var piece = pieces[SELECTED.pieceIndex];
+        var mapObj = map[piece.x][piece.y];
+        if (mapObj.selected) {
+          jumpit(CURRENT_PIECE, {x: pieces[CURRENT_PIECE.pieceIndex].x, y: pieces[CURRENT_PIECE.pieceIndex].y}, {x: piece.x, y: piece.y})
+          return;
+        }
+      }
       if (MOVE_CHAIN) {
         return;
       }
@@ -692,6 +695,7 @@ function takePiece(piece, from, to) {
     for (var i = 0; i < pieces.length; i++) {
       if (pieces[i].x === jump_x && pieces[i].y === jump_y && pieces[i] != piece.team) {
         pieces[i].taken = true;
+        checkCanCapture();
         var sceneObj = scene.getObjectByName(pieces[i].name);
         scene.remove(sceneObj);
         return false;
