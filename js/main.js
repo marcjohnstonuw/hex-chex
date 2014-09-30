@@ -1,5 +1,5 @@
 var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-var hexWidth = 9, hexHeight = 7;
+var hexWidth = 9, hexHeight = 8;
 var NUM_TEAMS = 2;
 var CURRENT_MOVE = 0;
 var MOVE_CHAIN = false;
@@ -73,15 +73,15 @@ var pieces = [
   {x: 6, y: 0, team: 0},
   {x: 7, y: 0, team: 0},
   {x: 8, y: 1, team: 0},
-  {x: 0, y: 5, team: 1},
-  {x: 1, y: 5, team: 1},
-  {x: 2, y: 6, team: 1},
-  {x: 3, y: 5, team: 1},
-  {x: 4, y: 5, team: 1},
-  {x: 5, y: 5, team: 1},
-  {x: 6, y: 6, team: 1},
-  {x: 7, y: 5, team: 1},
-  {x: 8, y: 5, team: 1}
+  {x: 0, y: 6, team: 1},
+  {x: 1, y: 6, team: 1},
+  {x: 2, y: 7, team: 1},
+  {x: 3, y: 6, team: 1},
+  {x: 4, y: 6, team: 1},
+  {x: 5, y: 6, team: 1},
+  {x: 6, y: 7, team: 1},
+  {x: 7, y: 6, team: 1},
+  {x: 8, y: 6, team: 1}
 ];
 var objects = [];
 
@@ -318,8 +318,8 @@ function onDocumentMouseDown( event ) {
         //setPiecePosition (CURRENT_PIECE, SELECTED.mapX, SELECTED.mapY)
         jumpit(CURRENT_PIECE, {x: pieces[CURRENT_PIECE.pieceIndex].x, y: pieces[CURRENT_PIECE.pieceIndex].y}, {x: SELECTED.mapX, y: SELECTED.mapY})
       } else {
-        SELECTED.material = hexMaterial[7]; 
-        mapObj.selected = true;
+        //SELECTED.material = hexMaterial[7]; 
+        //mapObj.selected = true;
       }
       console.log('match:' + SELECTED.name);
       intersects.forEach(function (thing) { console.log(thing.object.name + thing.distance) })
@@ -377,8 +377,16 @@ function setPiecePosition (piece, map_x, map_y) {
   pieces[piece.pieceIndex].y = map_y;
 }
 
-function getRange(map_x, map_y, radius) {
+function getRange(map_x, map_y, radius, mustTake) {
   var ret = [];
+  var enemyPositions = [];
+  if (mustTake) {
+    for (var i = 0; i < pieces.length; i++) {
+      if (pieces[i].team != CURRENT_MOVE && !pieces[i].taken) {
+        enemyPositions.push([pieces[i].x, pieces[i].y]);
+      }
+    }
+  }
   if (map_x % 2 === 1) {
     for (var i = -radius; i <= radius; i++) {
       for (var j = (-radius + Math.ceil(0.5 * Math.abs(i))); j <= (radius - Math.floor(0.5 * Math.abs(i))); j++) {
@@ -396,7 +404,37 @@ function getRange(map_x, map_y, radius) {
       }
     }
   }
+  if (mustTake) {
+    ret = intersectTiles(ret, enemyPositions);
+    ret = addJumps(ret, map_x, map_y);
+  }
   return ret;
+}
+
+function addJumps (moves, x, y) {
+  for (var i = 0; i < moves.length; i++) {
+    if (moves[i][0] === x && Math.abs(moves[i][1] - y) === 1 && y + 2 * (moves[i][1] - y) >= 0 && y + 2 * (moves[i][1] - y) < hexHeight) {
+      moves.push([x, y + 2 * (moves[i][1] - y)])
+    }
+    if (x % 2 === 0) {
+      if (Math.abs(moves[i][0] - x) === 1 && x + 2 * (moves[i][0] - x) >= 0 && x + 2 * (moves[i][0] - x) < hexWidth && y + 1 < hexHeight) {
+        if (moves[i][1] === y) {
+          moves.push([x + 2 * (moves[i][0] - x), y + 1]);
+        } else if (moves[i][1] === y - 1) {
+          moves.push([x + 2 * (moves[i][0] - x), y - 1]);
+        }
+      }
+    } else {
+      if (Math.abs(moves[i][0] - x) === 1 && x + 2 * (moves[i][0] - x) >= 0 && x + 2 * (moves[i][0] - x) < hexWidth && y + 1 < hexHeight) {
+        if (moves[i][1] === y + 1) {
+          moves.push([x + 2 * (moves[i][0] - x), y + 1]);
+        } else if (moves[i][1] === y) {
+          moves.push([x + 2 * (moves[i][0] - x), y - 1]);
+        }
+      }
+    }
+  }
+  return moves;
 }
 
 function getNeighbours(map_x, map_y, radius, self) {
@@ -447,8 +485,16 @@ function getNeighbours(map_x, map_y, radius, self) {
   return ret;
 }
 
-function getForwardMoves (map_x, map_y, radius) {
+function getForwardMoves (map_x, map_y, radius, mustTake) {
   var ret = [];
+  var enemyPositions = [];
+  if (mustTake) {
+    for (var i = 0; i < pieces.length; i++) {
+      if (pieces[i].team != CURRENT_MOVE && !pieces[i].taken) {
+        enemyPositions.push([pieces[i].x, pieces[i].y]);
+      }
+    }
+  }
 
   for (var i = -radius; i <= radius; i++) {
     var y_offset = Math.floor(Math.abs(i) / 2);
@@ -471,12 +517,24 @@ function getForwardMoves (map_x, map_y, radius) {
       }
     }
   }
+  if (mustTake) {
+    ret = intersectTiles(ret, enemyPositions);
+    ret = addJumps(ret, map_x, map_y);
+  }
 
   return ret;
 }
 
-function getBackwardMoves (map_x, map_y, radius) {
+function getBackwardMoves (map_x, map_y, radius, mustTake) {
   var ret = [];
+  var enemyPositions = [];
+  if (!!mustTake) {
+    for (var i = 0; i < pieces.length; i++) {
+      if (pieces[i].team != CURRENT_MOVE && !pieces[i].taken) {
+        enemyPositions.push([pieces[i].x, pieces[i].y]);
+      }
+    }
+  }
 
   for (var i = -radius; i <= radius; i++) {
     var y_offset = Math.ceil(Math.abs(i) / 2);
@@ -498,6 +556,10 @@ function getBackwardMoves (map_x, map_y, radius) {
         }
       }
     }
+  }
+  if (!!mustTake) {
+    ret = intersectTiles(ret, enemyPositions);
+    ret = addJumps(ret, map_x, map_y);
   }
 
   return ret;
@@ -546,7 +608,7 @@ function getDistance (p1, p2) {
 }
 
 function highlightMoves (piece) {
-  var neighbours = piece.getMoves(piece.x, piece.y, piece.range);//getRange(piece.x, piece.y, 2);//getNeighbours(piece.x, piece.y, 1);
+  var neighbours = piece.getMoves(piece.x, piece.y, piece.range, piece.canCapture);//getRange(piece.x, piece.y, 2);//getNeighbours(piece.x, piece.y, 1);
   neighbours.forEach(function (el) {
     map[el[0]][el[1]].selected = true;
     map[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
@@ -563,12 +625,12 @@ function jumpit(piece, from, to) {
   var nextTurn = takePiece(piece, from, to);
   pieces[piece.pieceIndex].x = to.x;
   pieces[piece.pieceIndex].y = to.y;
+  checkPromotion(pieces[piece.pieceIndex], to);
   if (nextTurn) {
     nextMove();
   } else {
     chainMove(pieces[piece.pieceIndex])
   }
-  checkPromotion(pieces[piece.pieceIndex], to);
   checkCanCapture();
   var start = getPiecePosition(from.x, from.y);
   var end = getPiecePosition(to.x, to.y);
@@ -668,7 +730,7 @@ function checkCanCapture () {
 
   for (var i = 0; i < pieces.length; i++) {
     if (pieces[i].team === CURRENT_MOVE && !pieces[i].taken) {
-      var moves = pieces[i].getMoves(pieces[i].x, pieces[i].y, pieces[i].range);
+      var moves = pieces[i].getMoves(pieces[i].x, pieces[i].y, pieces[i].range, pieces[i].canCapture);
       var intersection = intersectTiles(enemyPositions, moves).length > 0;
       pieces[i].canCapture = intersection;
       if (intersection) {
