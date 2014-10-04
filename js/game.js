@@ -84,7 +84,7 @@ function nextMove () {
 }
 
 function clickObject(obj) {
-	SELECTED = intersects[ 0 ].object;
+	SELECTED = obj;
 	if (SELECTED.gameType === 'Tile') {
 	  controls.enabled = false;
 	  var mapObj = map[SELECTED.mapX][SELECTED.mapY];
