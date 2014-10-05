@@ -1,6 +1,6 @@
 function getPiecePosition (map_x, map_y) {
   var x = -75 + 15 * map_x + (map_y % 2 == 0 ? 0 : 0),
-    y = 0 + map[map_x][map_y].height + 2,
+    y = 0 + map.tiles[map_x][map_y].height + 2,
     z = 90 - 17.2 * map_y - (map_x % 2 == 0 ? 0 : 8.6);
   return { x: x, y: y, z: z};
 }
@@ -206,14 +206,14 @@ function unselectAll (keepPiece) {
   }
   for (var i = 0; i < hexWidth; i++) {
     for (var j = 0; j < hexHeight; j++) {
-      if (map[i][j].selected) unselect(i, j);
+      if (map.tiles[i][j].selected) unselect(i, j);
     }
   }
 }
 
 function unselect(x, y) {
-  map[x][y].selected = false;
-  map[x][y].graphicObject.material = hexMaterial[0];
+  map.tiles[x][y].selected = false;
+  map.tiles[x][y].graphicObject.material = hexMaterial[0];
 }
 
 function checkPromotion(piece, to) {
@@ -296,8 +296,8 @@ function intersectTiles(a, b) {
 function highlightMoves (piece) {
   var neighbours = piece.getMoves(piece.x, piece.y, piece.range, piece.canCapture);//getRange(piece.x, piece.y, 2);//getNeighbours(piece.x, piece.y, 1);
   neighbours.forEach(function (el) {
-    map[el[0]][el[1]].selected = true;
-    map[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
+    map.tiles[el[0]][el[1]].selected = true;
+    map.tiles[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
   })
 }
 

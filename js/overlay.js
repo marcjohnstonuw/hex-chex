@@ -7,14 +7,14 @@ $(document).ready(function () {
 		'</div>')
 
 	$("input[name='control-group']").change(function (evt) {
-		console.log('hi mom!');
 		var val = evt.target.value;
 		resetControls();
 		switch (val) {
 			case 'camera':
-				initCameraControls()
+				initCameraControls();
 				break;
 			case 'terraform':
+				initTerraformControls();
 				break;
 			case 'paint':
 				break;

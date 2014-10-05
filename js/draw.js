@@ -1,4 +1,3 @@
-var colors = [0x00CC00, 0xCC0000, 0x0000CC, 0xCCCC00, 0xCC00CC, 0x00CCCC, 0xCCCCCC, 0x333333];
 var renderer;
 var projector;
 var camera;
@@ -7,40 +6,6 @@ var scene;
 var radius = 2,
     segments = 16,
     rings = 16;
-var hexMaterial = [
-  new THREE.MeshLambertMaterial(
-    {
-      color: colors[0],
-    }),
-  new THREE.MeshLambertMaterial(
-    {
-      color: colors[1],
-    }),
-  new THREE.MeshLambertMaterial(
-    {
-      color: colors[2]
-    }),
-  new THREE.MeshLambertMaterial(
-    {
-      color: colors[3]
-    }),
-  new THREE.MeshLambertMaterial(
-    {
-      color: colors[4]
-    }),
-  new THREE.MeshLambertMaterial(
-    {
-      color: colors[5]
-    }),
-  new THREE.MeshLambertMaterial(
-    {
-      color: colors[6]
-    }),
-  new THREE.MeshLambertMaterial(
-    {
-      color: colors[7]
-    }),
-  ];
 
 function initScene () {
 	var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
@@ -139,28 +104,32 @@ function initScene () {
 	  requestAnimationFrame( animate );
 	  render();
 	}
-	for (var i = 0; i < hexWidth; i++) {
-		for (var j = 0; j < hexHeight; j++) {
-			var height = map[i][j].height
+	for (var i = 0; i < map.width; i++) {
+		for (var j = 0; j < map.height; j++) {
+			var height = map.tiles[i][j].height
 			var hex = new THREE.Mesh (
-				new THREE.CylinderGeometry(10, 10, height, 6, 1, false),
-				hexMaterial[ map[i][j].material]);
-	    hex.castShadow = true;
-	    hex.receiveShadow = true;
+				new THREE.CylinderGeometry(10, 10, Tile.stepHeight, 6, 1, false),
+				map.tiles[i][j].material
+			);
+		    hex.castShadow = true;
+		    hex.receiveShadow = true;
 			var x = -75 + 15 * i + (j % 2 == 0 ? 0 : 0),
-				y = 0 +  map[i][j].height / 2,
+				y = 0 + Tile.stepHeight / 2,
 				z = 90 - 17.2 * j - (i % 2 == 0 ? 0 : 8.6);
 			hex.position.set(x, y, z);
-	    hex.rotation.y = Math.PI / 2;
-	    hex.name = "hex X:" + i + " Z:" + j;
-	    hex.gameType = "Tile";
-	    hex.mapX = i;
-	    hex.mapY = j;
-	    map[i][j].graphicObject = hex;
+			hex.scale.y = height;
+		    hex.rotation.y = Math.PI / 2;
+		    hex.name = "hex X:" + i + " Z:" + j;
+		    hex.gameType = "Tile";
+		    hex.mapX = i;
+		    hex.mapY = j;
+		    map.tiles[i][j].graphicObject = hex;
 			scene.add(hex);
-	    objects.push(hex);
+	    	objects.push(hex);
 		}
 	}
+
+
 	for (var i = 0; i < pieces.length; i++) {
 	  var piece = new THREE.Mesh (
 	    new THREE.CylinderGeometry(6, 6, 4, 36, 1, false),
