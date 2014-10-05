@@ -1,0 +1,17 @@
+.overlay {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.controls {
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 200px;
+	height: 200px;
+	background-color: rgba(128, 128, 128, 0.3);
+	z-index: 100;
+}

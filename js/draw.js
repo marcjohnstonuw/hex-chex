@@ -89,7 +89,7 @@ function initScene () {
 
 	// the camera starts at 0,0,0
 	// so pull it back
-	camera.position.set(0, 400, 200);
+	camera.position.set(0, 250, 300);
 	camera.lookAt(scene.position);	
 
 	// start the renderer
@@ -134,6 +134,7 @@ function initScene () {
 	  renderer.render( scene, camera );
 	}
 	function animate() {
+	  animation.update(.1);
 	  controls.update();
 	  requestAnimationFrame( animate );
 	  render();
@@ -182,7 +183,7 @@ function initScene () {
 	  var map_x = pieces[i].x
 	  var map_y = pieces[i].y
 	  setPiecePosition(piece, map_x, map_y)
-	  scene.add(piece);
+	  //scene.add(piece);
 	}
 
 
@@ -220,11 +221,50 @@ loader.load( 'assets/objects/sword.obj', function ( object ) {
 
   object.position.y = 80;
   object.scale.set(30, 30, 30)
-  scene.add( object );
+  //scene.add( object );
 
 } );
 
-	animate();
+loader = new THREE.JSONLoader(); // init the loader util
+// load the model and create everything
+loader.load('assets/objects/linked.js', function (geometry, materials) {
+  var mesh, material;
+
+  // create a mesh
+  mesh = new THREE.SkinnedMesh(
+    geometry,
+    new THREE.MeshFaceMaterial(materials)
+  );
+
+  // define materials collection
+  materials = mesh.material.materials;
+
+  // enable skinning
+  for (var i = 0; i < materials.length; i++) {
+    var mat = materials[i];
+
+    mat.skinning = true;
+  }
+  mesh.position.y = 110;
+  mesh.scale.set(10, 10, 10);
+
+  //scene.add(mesh);
+
+  // add animation data to the animation handler
+  //THREE.AnimationHandler.add(mesh.geometry.animation);
+
+  // create animation
+  animation = new THREE.Animation(
+    mesh,
+    mesh.geometry.animations[0]
+  );
+
+  // play the anim
+  animation.play();
+
+  animate();
+})
+
 }
 
 

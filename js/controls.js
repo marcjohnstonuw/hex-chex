@@ -57,8 +57,21 @@ function onDocumentMouseUp( event ) {
   container.style.cursor = 'auto';
 }
 
-function initControls() {
-  renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
-  renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
-  renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
+function resetControls () {
+  controls.enabled = false;
+  TERRAFORM = false;
+  $(renderer.domElement).off('mousedown');
+  $(renderer.domElement).off('mousemove');
+  $(renderer.domElement).off('mouseup');
+}
+
+function initCameraControls() {
+  controls.enabled = true;
+  $(renderer.domElement).on('mousedown', onDocumentMouseDown);
+  $(renderer.domElement).on('mousemove', onDocumentMouseMove);
+  $(renderer.domElement).on('mouseup', onDocumentMouseUp);
+}
+
+function initTerraform() {
+  TERRAFORM = true;
 }

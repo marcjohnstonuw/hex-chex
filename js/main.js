@@ -1,2 +1,2 @@
 initScene();
-initControls();
+initCameraControls();
