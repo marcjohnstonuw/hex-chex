@@ -141,7 +141,7 @@ manager.onProgress = function ( item, loaded, total ) {
 var texture = new THREE.Texture();
 
 var loader = new THREE.ImageLoader( manager );
-loader.load( 'assets/textures/UV_Grid_Sm.jpg', function ( image ) {
+loader.load( 'assets/textures/grass.jpg', function ( image ) {
 
   texture.image = image;
   texture.needsUpdate = true;
@@ -245,55 +245,4 @@ function getDistance (p1, p2) {
     }
   }
   return ret;
-}
-
-function getHexagon () {//THREE.CylinderGeometry(10, 10, Tile.stepHeight, 6, 1, false),
-var coin_sides_geo = new THREE.CylinderGeometry( 10, 10, 15, 6, 1, true );
-var coin_cap_geo = new THREE.Geometry();
-var r = 10.0;
-var sides = 6;
-for (var i=0; i<sides; i++) {
-var a = i * 1/sides * Math.PI * 2;
-var z = Math.sin(a);
-var x = Math.cos(a);
-var a1 = (i+1) * 1/sides * Math.PI * 2;
-var z1 = Math.sin(a1);
-var x1 = Math.cos(a1);
-coin_cap_geo.vertices.push(
-new THREE.Vertex(new THREE.Vector3(0, 0, 0)),
-new THREE.Vertex(new THREE.Vector3(x*r, 0, z*r)),
-new THREE.Vertex(new THREE.Vector3(x1*r, 0, z1*r))
-);
-coin_cap_geo.faceVertexUvs[0].push([
-new THREE.UV(0.5, 0.5),
-new THREE.UV(x/2+0.5, z/2+0.5),
-new THREE.UV(x1/2+0.5, z1/2+0.5)
-]);
-coin_cap_geo.faces.push(new THREE.Face3(i*3, i*3+1, i*3+2));
-}
-coin_cap_geo.computeCentroids();
-coin_cap_geo.computeFaceNormals();
-
-var coin_sides_texture =
-THREE.ImageUtils.loadTexture("assets/textures/grass.jpg");
-var coin_cap_texture =
-THREE.ImageUtils.loadTexture("assets/textures/grass.jpg");
-
-var coin_sides_mat =
-new THREE.MeshLambertMaterial({map:coin_sides_texture});
-var coin_sides =
-new THREE.Mesh( coin_sides_geo, coin_sides_mat );
-
-var coin_cap_mat = new THREE.MeshLambertMaterial({map:coin_cap_texture});
-var coin_cap_top = new THREE.Mesh( coin_cap_geo, coin_cap_mat );
-var coin_cap_bottom = new THREE.Mesh( coin_cap_geo, coin_cap_mat );
-coin_cap_top.position.y = 50.5;
-coin_cap_bottom.position.y = 49.5;
-coin_cap_top.rotation.x = Math.PI;
-
-var coin = new THREE.Object3D();
-coin.add(coin_sides);
-coin.add(coin_cap_top);
-coin.add(coin_cap_bottom);
-scene.add(coin)
 }

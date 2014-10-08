@@ -42,7 +42,7 @@ function onDocumentMouseDown( event ) {
 
   var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
 
-  var intersects = raycaster.intersectObjects( scene.children );
+  var intersects = raycaster.intersectObjects( scene.children, true );
 
   if ( intersects.length > 0 ) {
     clickObject(intersects[0].object, event);
@@ -102,8 +102,8 @@ function paintTile(tile) {
 
 function clickObject(obj, event) {
   SELECTED = obj;
-  if (SELECTED.gameType === 'Tile') {
-    var mapObj = map.tiles[SELECTED.mapX][SELECTED.mapY];
+  if (SELECTED.userObject.gameType === 'Tile') {
+    var mapObj = map.tiles[SELECTED.userObject.mapX][SELECTED.userObject.mapY];
     if (CONTROL_MODE === 'terraform') {
       mapObj.beginDragTile(event);
     } else if (CONTROL_MODE === 'paint') {
@@ -113,9 +113,9 @@ function clickObject(obj, event) {
     if(CURRENT_PIECE !== null && mapObj.selected) {
       jumpit(CURRENT_PIECE, {x: pieces[CURRENT_PIECE.pieceIndex].x, y: pieces[CURRENT_PIECE.pieceIndex].y}, {x: SELECTED.mapX, y: SELECTED.mapY})
     }
-  } else if (SELECTED.gameType === 'Piece') {
-    if (SELECTED.team !== CURRENT_MOVE) {
-      var piece = pieces[SELECTED.pieceIndex];
+  } else if (SELECTED.userObject.gameType === 'Piece') {
+    if (SELECTED.userObject.team !== CURRENT_MOVE) {
+      var piece = pieces[SELECTED.userObject.pieceIndex];
       var mapObj = map[piece.x][piece.y];
       if (mapObj.selected) {
         jumpit(CURRENT_PIECE, {x: pieces[CURRENT_PIECE.pieceIndex].x, y: pieces[CURRENT_PIECE.pieceIndex].y}, {x: piece.x, y: piece.y})
@@ -125,8 +125,8 @@ function clickObject(obj, event) {
     if (MOVE_CHAIN) {
       return;
     }
-    if (SELECTED.team === CURRENT_MOVE) {
-      var piece = pieces[SELECTED.pieceIndex];
+    if (SELECTED.userObject.team === CURRENT_MOVE) {
+      var piece = pieces[SELECTED.userObject.pieceIndex];
       if (!CAN_CAPTURE || piece.canCapture) {
         unselectAll();
         CURRENT_PIECE = SELECTED;

@@ -44,26 +44,30 @@ var hexMaterial = [{
     })
   },
   {
-    name: 'Grey',
-    color: '#CCCCCC',
-    material: new THREE.MeshLambertMaterial(
-    {
-      color: colors[6]
-    })
-  },
-  {
     name: 'black',
     color: '#333333',
     material: new THREE.MeshLambertMaterial(
     {
       color: colors[7]
     })
+  },
+  {
+    name: 'tex',
+    type: 'Texture',
+    color: '#ff6600',
+    material: THREE.ImageUtils.loadTexture('assets/textures/UV_Grid_Sm.jpg'),
+  },
+  {
+    name: 'grass',
+    type: 'Texture',
+    color: '#00ff00',
+    material: THREE.ImageUtils.loadTexture('assets/textures/grass.jpg'),
   }
   ];
 
 
   var Materials = {};
-  Materials.defaultTile = hexMaterial[0];
+  Materials.defaultTile = hexMaterial[8];
   Materials.colors = hexMaterial;
 
 var manager = new THREE.LoadingManager();
@@ -88,7 +92,7 @@ manager.onProgress = function ( item, loaded, total ) {
     }
   }
 
-var texture = new THREE.Texture();
+var texture = THREE.ImageUtils.loadTexture('assets/textures/UV_Grid_Sm.jpg');// new THREE.Texture();
 
 var loader = new THREE.ImageLoader( manager );
 loader.load( 'assets/textures/grass.jpg', function ( image ) {
@@ -101,7 +105,7 @@ loader.load( 'assets/textures/grass.jpg', function ( image ) {
     material: texture,
     type: 'Texture'
   })
-  updatePalette();
+  //updatePalette();
 }
 
 );
