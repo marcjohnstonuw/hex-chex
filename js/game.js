@@ -1,14 +1,11 @@
-var hexWidth = 9, hexHeight = 8;
 var NUM_TEAMS = 2;
 var CURRENT_MOVE = 0;
 var MOVE_CHAIN = false;
 var CAN_CAPTURE = false;
 var SELECTED, INTERSECTED, CURRENT_PIECE = null;
 
-
-var map = new Map({width: hexWidth, height: hexHeight})
-
 var pieces = [
+/*
   {x: 0, y: 1, team: 0},
   {x: 1, y: 0, team: 0},
   {x: 2, y: 0, team: 0},
@@ -27,6 +24,7 @@ var pieces = [
   {x: 6, y: 7, team: 1},
   {x: 7, y: 6, team: 1},
   {x: 8, y: 6, team: 1}
+  */
 ];
 
 function jumpit(piece, from, to) {

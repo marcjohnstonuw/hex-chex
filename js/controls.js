@@ -1,6 +1,7 @@
 var mouse = new THREE.Vector2();
 var controls;
 var CONTROL_MODE;
+var SELECTED_COLOR = 0;
 var clickLocation = {};
 function onDocumentMouseMove( event ) {
 
@@ -89,7 +90,15 @@ function initTerraformControls() {
   CONTROL_MODE = 'terraform';
 }
 
+function initPaintControls() {
+  CONTROL_MODE = 'paint';
+}
 
+function paintTile(tile) {
+  tile.paint(Materials.colors[SELECTED_COLOR]);
+  //tile.graphicObject.material = Materials.colors[SELECTED_COLOR].material
+  console.log(tile.graphicObject);
+}
 
 function clickObject(obj, event) {
   SELECTED = obj;
@@ -97,6 +106,8 @@ function clickObject(obj, event) {
     var mapObj = map.tiles[SELECTED.mapX][SELECTED.mapY];
     if (CONTROL_MODE === 'terraform') {
       mapObj.beginDragTile(event);
+    } else if (CONTROL_MODE === 'paint') {
+      paintTile(mapObj);
     }
     controls.enabled = false;
     if(CURRENT_PIECE !== null && mapObj.selected) {

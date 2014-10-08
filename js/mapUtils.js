@@ -213,7 +213,7 @@ function unselectAll (keepPiece) {
 
 function unselect(x, y) {
   map.tiles[x][y].selected = false;
-  map.tiles[x][y].graphicObject.material = hexMaterial[0];
+  map.tiles[x][y].graphicObject.material = Materials.colors[0].material;
 }
 
 function checkPromotion(piece, to) {
@@ -297,7 +297,7 @@ function highlightMoves (piece) {
   var neighbours = piece.getMoves(piece.x, piece.y, piece.range, piece.canCapture);//getRange(piece.x, piece.y, 2);//getNeighbours(piece.x, piece.y, 1);
   neighbours.forEach(function (el) {
     map.tiles[el[0]][el[1]].selected = true;
-    map.tiles[el[0]][el[1]].graphicObject.material = hexMaterial[7]; 
+    map.tiles[el[0]][el[1]].graphicObject.material = Materials.color[7].material; 
   })
 }
 

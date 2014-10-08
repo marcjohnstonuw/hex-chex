@@ -13,3 +13,16 @@
 	background-color: rgba(128, 128, 128, 0.3);
 	z-index: 100;
 }
+
+.palette .color {
+	position: relative;
+	height: 40px;
+}
+
+.palette .color .swatch {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 30px;
+	width: 50px;
+}

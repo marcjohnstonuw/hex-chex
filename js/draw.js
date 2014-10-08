@@ -8,6 +8,7 @@ var radius = 2,
     rings = 16;
 
 function initScene () {
+	var hexWidth = 9, hexHeight = 8;
 	var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 	// set some camera attributes
 	var VIEW_ANGLE = 45,
@@ -66,9 +67,6 @@ function initScene () {
 	// attach the render-supplied DOM element
 	$container.append(renderer.domElement);
 
-
-
-
 	scene.add( new THREE.AmbientLight( 0x202020 ) );
 
 	// create a point light
@@ -104,36 +102,13 @@ function initScene () {
 	  requestAnimationFrame( animate );
 	  render();
 	}
-	for (var i = 0; i < map.width; i++) {
-		for (var j = 0; j < map.height; j++) {
-			var height = map.tiles[i][j].height
-			var hex = new THREE.Mesh (
-				new THREE.CylinderGeometry(10, 10, Tile.stepHeight, 6, 1, false),
-				map.tiles[i][j].material
-			);
-		    hex.castShadow = true;
-		    hex.receiveShadow = true;
-			var x = -75 + 15 * i + (j % 2 == 0 ? 0 : 0),
-				y = 0 + Tile.stepHeight / 2,
-				z = 90 - 17.2 * j - (i % 2 == 0 ? 0 : 8.6);
-			hex.position.set(x, y, z);
-			hex.scale.y = height;
-		    hex.rotation.y = Math.PI / 2;
-		    hex.name = "hex X:" + i + " Z:" + j;
-		    hex.gameType = "Tile";
-		    hex.mapX = i;
-		    hex.mapY = j;
-		    map.tiles[i][j].graphicObject = hex;
-			scene.add(hex);
-	    	objects.push(hex);
-		}
-	}
 
+	map = new Map({width: hexWidth, height: hexHeight})
 
 	for (var i = 0; i < pieces.length; i++) {
 	  var piece = new THREE.Mesh (
 	    new THREE.CylinderGeometry(6, 6, 4, 36, 1, false),
-	  hexMaterial[pieces[i].team + 1]);
+	  Materials.colors[pieces[i].team + 1].material);
 	  piece.castShadow = true;
 	  piece.receiveShadow = true;
 	  piece.name = "piece" + i;
@@ -181,7 +156,7 @@ loader.load( 'assets/objects/sword.obj', function ( object ) {
   object.traverse( function ( child ) {
 
     if ( child instanceof THREE.Mesh ) {
-
+	  //child.material = Materials.colors[3];
       child.material.map = texture;
 
     }
@@ -190,7 +165,7 @@ loader.load( 'assets/objects/sword.obj', function ( object ) {
 
   object.position.y = 80;
   object.scale.set(30, 30, 30)
-  //scene.add( object );
+  scene.add( object );
 
 } );
 
@@ -272,3 +247,53 @@ function getDistance (p1, p2) {
   return ret;
 }
 
+function getHexagon () {//THREE.CylinderGeometry(10, 10, Tile.stepHeight, 6, 1, false),
+var coin_sides_geo = new THREE.CylinderGeometry( 10, 10, 15, 6, 1, true );
+var coin_cap_geo = new THREE.Geometry();
+var r = 10.0;
+var sides = 6;
+for (var i=0; i<sides; i++) {
+var a = i * 1/sides * Math.PI * 2;
+var z = Math.sin(a);
+var x = Math.cos(a);
+var a1 = (i+1) * 1/sides * Math.PI * 2;
+var z1 = Math.sin(a1);
+var x1 = Math.cos(a1);
+coin_cap_geo.vertices.push(
+new THREE.Vertex(new THREE.Vector3(0, 0, 0)),
+new THREE.Vertex(new THREE.Vector3(x*r, 0, z*r)),
+new THREE.Vertex(new THREE.Vector3(x1*r, 0, z1*r))
+);
+coin_cap_geo.faceVertexUvs[0].push([
+new THREE.UV(0.5, 0.5),
+new THREE.UV(x/2+0.5, z/2+0.5),
+new THREE.UV(x1/2+0.5, z1/2+0.5)
+]);
+coin_cap_geo.faces.push(new THREE.Face3(i*3, i*3+1, i*3+2));
+}
+coin_cap_geo.computeCentroids();
+coin_cap_geo.computeFaceNormals();
+
+var coin_sides_texture =
+THREE.ImageUtils.loadTexture("assets/textures/grass.jpg");
+var coin_cap_texture =
+THREE.ImageUtils.loadTexture("assets/textures/grass.jpg");
+
+var coin_sides_mat =
+new THREE.MeshLambertMaterial({map:coin_sides_texture});
+var coin_sides =
+new THREE.Mesh( coin_sides_geo, coin_sides_mat );
+
+var coin_cap_mat = new THREE.MeshLambertMaterial({map:coin_cap_texture});
+var coin_cap_top = new THREE.Mesh( coin_cap_geo, coin_cap_mat );
+var coin_cap_bottom = new THREE.Mesh( coin_cap_geo, coin_cap_mat );
+coin_cap_top.position.y = 50.5;
+coin_cap_bottom.position.y = 49.5;
+coin_cap_top.rotation.x = Math.PI;
+
+var coin = new THREE.Object3D();
+coin.add(coin_sides);
+coin.add(coin_cap_top);
+coin.add(coin_cap_bottom);
+scene.add(coin)
+}
